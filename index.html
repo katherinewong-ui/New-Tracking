@@ -82,7 +82,10 @@ margin: 0;
 </button>
 </div>
 </div>
-<div class="h-[400px] w-full bg-cover bg-center rounded-lg overflow-hidden mb-6" style="background-image: url('https://ai-public.mastergo.com/gen_page/map_placeholder_1280x720.png')"></div>
+<div class="flex gap-6 mb-6">
+<div class="h-[400px] flex-1 bg-cover bg-center rounded-lg overflow-hidden" style="background-image: url('https://ai-public.mastergo.com/gen_page/map_placeholder_1280x720.png')"></div>
+<div class="w-[400px] h-[400px]" id="locationPieChart"></div>
+</div>
 <div class="space-y-4">
 <div class="flex items-center justify-between p-4 bg-background rounded-lg">
 <div>
@@ -290,9 +293,53 @@ color: '#4A4A4A'
 };
 glucoseChart.setOption(glucoseOption);
 weightChart.setOption(weightOption);
+const locationPieChart = echarts.init(document.getElementById('locationPieChart'));
+const locationPieOption = {
+    animation: false,
+    tooltip: {
+        trigger: 'item',
+        formatter: '{b}: {c} days ({d}%)'
+    },
+    legend: {
+        orient: 'vertical',
+        left: 'left',
+        top: 'middle'
+    },
+    series: [
+        {
+            type: 'pie',
+            radius: '70%',
+            center: ['60%', '50%'],
+            data: [
+                { value: 23, name: '朝阳区建国路' },
+                { value: 32, name: '海淀区中关村' },
+                { value: 33, name: '西城区西单' },
+                { value: 9, name: '东城区王府井' }
+            ],
+            itemStyle: {
+                color: function(params) {
+                    const colors = ['#FFB26B', '#FFD4D4', '#4A4A4A', '#94A3B8'];
+                    return colors[params.dataIndex];
+                }
+            },
+            emphasis: {
+                itemStyle: {
+                    shadowBlur: 10,
+                    shadowOffsetX: 0,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+            },
+            label: {
+                show: false
+            }
+        }
+    ]
+};
+locationPieChart.setOption(locationPieOption);
 window.addEventListener('resize', function() {
-glucoseChart.resize();
-weightChart.resize();
+    glucoseChart.resize();
+    weightChart.resize();
+    locationPieChart.resize();
 });
 </script>
 </body>
