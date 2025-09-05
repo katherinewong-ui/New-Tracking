@@ -107,10 +107,7 @@ cursor: pointer;
 <input type="date" id="locationDate" class="border border-primary px-4 py-2 !rounded-button">
 </div>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-<div class="h-[300px] w-full bg-cover bg-center rounded-lg overflow-hidden" style="background-image: url('https://ai-public.mastergo.com/gen_page/map_placeholder_1280x720.png')"></div>
-<div id="locationPieChart" class="h-[300px] w-full bg-white rounded-lg shadow-sm p-4"></div>
-</div>
+<div class="h-[300px] w-full bg-cover bg-center rounded-lg overflow-hidden mb-6" style="background-image: url('https://ai-public.mastergo.com/gen_page/map_placeholder_1280x720.png')"></div>
 <div class="space-y-4">
 <div class="flex items-center justify-between p-4 bg-background rounded-lg">
 <div>
@@ -128,6 +125,16 @@ cursor: pointer;
 <div id="locationHistory" class="space-y-4">
 <!-- 位置记录将动态添加到这里 -->
 <p class="text-gray-500 text-center py-4">暂无历史记录</p>
+</div>
+</div>
+</div>
+<!-- 地点停留统计部分 -->
+<div class="mt-8">
+<h3 class="font-medium mb-4">地点停留统计</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div id="locationStatsChart" class="h-64"></div>
+<div id="locationStatsList" class="flex flex-col justify-center">
+<p class="text-gray-500 text-center">暂无统计数据</p>
 </div>
 </div>
 </div>
@@ -288,7 +295,7 @@ cursor: pointer;
 // 初始化图表
 const glucoseChart = echarts.init(document.getElementById('glucoseChart'));
 const weightChart = echarts.init(document.getElementById('weightChart'));
-const locationPieChart = echarts.init(document.getElementById('locationPieChart'));
+const locationStatsChart = echarts.init(document.getElementById('locationStatsChart'));
 
 // 数据存储
 let healthData = {
@@ -316,80 +323,7 @@ function updateUI() {
   updateLocationUI();
   updateGlucoseUI();
   updateWeightUI();
-}
-
-// 计算位置百分比并更新饼图
-function updateLocationPieChart() {
-  const locationData = healthData.location || {};
-  
-  // 统计每个位置的出现次数
-  const locationCounts = {};
-  Object.values(locationData).forEach(location => {
-    locationCounts[location] = (locationCounts[location] || 0) + 1;
-  });
-  
-  // 转换为饼图数据格式
-  const pieData = Object.entries(locationCounts).map(([name, value]) => ({
-    name,
-    value
-  }));
-  
-  if (pieData.length === 0) {
-    locationPieChart.setOption({
-      title: {
-        text: '暂无位置数据',
-        left: 'center',
-        top: 'center',
-        textStyle: {
-          color: '#999',
-          fontSize: 16,
-          fontWeight: 'normal'
-        }
-      },
-      series: []
-    });
-    return;
-  }
-  
-  const option = {
-    title: {
-      text: '位置分布',
-      left: 'center',
-      textStyle: {
-        fontSize: 16
-      }
-    },
-    tooltip: {
-      trigger: 'item',
-      formatter: '{a} <br/>{b}: {c}次 ({d}%)'
-    },
-    legend: {
-      orient: 'vertical',
-      left: 'left',
-      type: 'scroll',
-      height: 200
-    },
-    series: [
-      {
-        name: '位置',
-        type: 'pie',
-        radius: '60%',
-        data: pieData,
-        emphasis: {
-          itemStyle: {
-            shadowBlur: 10,
-            shadowOffsetX: 0,
-            shadowColor: 'rgba(0, 0, 0, 0.5)'
-          }
-        },
-        label: {
-          formatter: '{b}: {c}次 ({d}%)'
-        }
-      }
-    ]
-  };
-  
-  locationPieChart.setOption(option);
+  updateLocationStatsUI(); // 新增：更新地点停留统计
 }
 
 // 更新位置UI
@@ -410,7 +344,6 @@ function updateLocationUI() {
     locationHistory.innerHTML = '<p class="text-gray-500 text-center py-4">暂无历史记录</p>';
     currentLocation.textContent = '暂无记录';
     locationDuration.textContent = '停留时间：0 天';
-    updateLocationPieChart();
     return;
   }
   
@@ -445,11 +378,150 @@ function updateLocationUI() {
       delete healthData.location[date];
       saveData();
       updateLocationUI();
+      updateLocationStatsUI(); // 更新统计
     });
   });
+}
+
+// 新增：更新地点停留统计UI
+function updateLocationStatsUI() {
+  const locationStatsList = document.getElementById('locationStatsList');
+  const locationData = healthData.location || {};
   
-  // 更新饼图
-  updateLocationPieChart();
+  // 计算每个地点的停留天数
+  const locationStats = {};
+  const sortedDates = Object.keys(locationData).sort();
+  
+  if (sortedDates.length === 0) {
+    locationStatsList.innerHTML = '<p class="text-gray-500 text-center">暂无统计数据</p>';
+    locationStatsChart.setOption({
+      title: {
+        text: '暂无位置数据',
+        left: 'center',
+        top: 'center',
+        textStyle: {
+          color: '#999',
+          fontSize: 14,
+          fontWeight: 'normal'
+        }
+      },
+      series: []
+    });
+    return;
+  }
+  
+  // 计算每个地点的停留天数
+  let currentLocation = null;
+  let startDate = null;
+  
+  sortedDates.forEach((date, index) => {
+    const location = locationData[date];
+    
+    if (location !== currentLocation) {
+      // 如果切换地点，计算上一个地点的停留天数
+      if (currentLocation && startDate) {
+        const endDate = index > 0 ? new Date(sortedDates[index - 1]) : new Date(date);
+        const days = Math.floor((endDate - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
+        
+        if (!locationStats[currentLocation]) {
+          locationStats[currentLocation] = 0;
+        }
+        locationStats[currentLocation] += days;
+      }
+      
+      // 开始新的地点记录
+      currentLocation = location;
+      startDate = date;
+    }
+    
+    // 处理最后一条记录
+    if (index === sortedDates.length - 1) {
+      const endDate = new Date(date);
+      const days = Math.floor((endDate - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
+      
+      if (!locationStats[currentLocation]) {
+        locationStats[currentLocation] = 0;
+      }
+      locationStats[currentLocation] += days;
+    }
+  });
+  
+  // 计算总天数和百分比
+  const totalDays = Object.values(locationStats).reduce((sum, days) => sum + days, 0);
+  
+  // 准备图表数据
+  const chartData = [];
+  const statsListItems = [];
+  
+  Object.entries(locationStats)
+    .sort((a, b) => b[1] - a[1]) // 按天数降序排序
+    .forEach(([location, days]) => {
+      const percentage = ((days / totalDays) * 100).toFixed(1);
+      
+      // 图表数据
+      chartData.push({
+        value: days,
+        name: location
+      });
+      
+      // 统计列表项
+      statsListItems.push(`
+        <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+          <span class="font-medium">${location}</span>
+          <span class="text-primary">${percentage}% (${days}天)</span>
+        </div>
+      `);
+    });
+  
+  // 更新统计列表
+  locationStatsList.innerHTML = statsListItems.join('');
+  
+  // 更新统计图表
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c}天 ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      right: 10,
+      top: 'center',
+      formatter: function(name) {
+        const data = chartData.find(item => item.name === name);
+        return `${name}: ${data.value}天`;
+      }
+    },
+    series: [
+      {
+        name: '地点停留',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 10,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        label: {
+          show: false,
+          position: 'center'
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 14,
+            fontWeight: 'bold'
+          }
+        },
+        labelLine: {
+          show: false
+        },
+        data: chartData
+      }
+    ]
+  };
+  
+  locationStatsChart.setOption(option);
 }
 
 // 更新血糖UI
@@ -718,6 +790,7 @@ function setupModals() {
     
     saveData();
     updateLocationUI();
+    updateLocationStatsUI(); // 更新统计
     document.getElementById('locationModal').style.display = 'none';
     this.reset();
   });
@@ -775,7 +848,7 @@ document.addEventListener('DOMContentLoaded', function() {
   window.addEventListener('resize', function() {
     glucoseChart.resize();
     weightChart.resize();
-    locationPieChart.resize();
+    locationStatsChart.resize();
   });
 });
 </script>
