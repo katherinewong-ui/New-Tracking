@@ -97,7 +97,7 @@ cursor: pointer;
 <main class="pt-16">
 <section id="location" class="py-12">
 <div class="max-w-7xl mx-auto px-4">
-<h2 class="text-2xl font-bold mb-8">爸爸位置记录</h2>
+<h2 class="text-2xl font-bold mb-8">Dad's Location Tracking</h2>
 <div class="bg-white rounded-lg shadow-sm p-6">
 <div class="flex items-center justify-between mb-6">
 <div class="flex space-x-4">
@@ -352,17 +352,28 @@ function updateLocationUI() {
   currentLocation.textContent = latestLocation;
   
   // 计算停留时间（从记录日期到今天）
-  const stayDays = Math.floor((new Date() - new Date(latestDate)) / (1000 * 60 * 60 * 24));
+  const stayDays = Math.floor((new Date() - new Date(latestDate)) / (1000 * 60 * 60 * 24)) + 1;
   locationDuration.textContent = `停留时间：${stayDays} 天`;
   
   // 显示历史记录
-  locations.forEach(([date, location]) => {
+  locations.forEach(([date, location], index) => {
+    // 计算每个地点的停留天数
+    let stayDaysForLocation = 1;
+    if (index < locations.length - 1) {
+      const nextDate = new Date(locations[index + 1][0]);
+      const currentDate = new Date(date);
+      stayDaysForLocation = Math.floor((nextDate - currentDate) / (1000 * 60 * 60 * 24));
+    } else {
+      // 第一条记录（最新记录）的停留天数已经计算过了
+      stayDaysForLocation = stayDays;
+    }
+    
     const locationElement = document.createElement('div');
     locationElement.className = 'flex items-center justify-between';
     locationElement.innerHTML = `
       <div>
         <p class="font-medium">${location}</p>
-        <p class="text-sm text-gray-500">${date}</p>
+        <p class="text-sm text-gray-500">${date} (停留${stayDaysForLocation}天)</p>
       </div>
       <button class="text-red-500 hover:text-opacity-80 delete-location" data-date="${date}">
         <i class="fas fa-trash"></i>
@@ -383,7 +394,7 @@ function updateLocationUI() {
   });
 }
 
-// 新增：更新地点停留统计UI
+// 更新地点停留统计UI
 function updateLocationStatsUI() {
   const locationStatsList = document.getElementById('locationStatsList');
   const locationData = healthData.location || {};
@@ -411,40 +422,28 @@ function updateLocationStatsUI() {
   }
   
   // 计算每个地点的停留天数
-  let currentLocation = null;
-  let startDate = null;
-  
-  sortedDates.forEach((date, index) => {
-    const location = locationData[date];
+  for (let i = 0; i < sortedDates.length; i++) {
+    const currentDate = sortedDates[i];
+    const currentLocation = locationData[currentDate];
     
-    if (location !== currentLocation) {
-      // 如果切换地点，计算上一个地点的停留天数
-      if (currentLocation && startDate) {
-        const endDate = index > 0 ? new Date(sortedDates[index - 1]) : new Date(date);
-        const days = Math.floor((endDate - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
-        
-        if (!locationStats[currentLocation]) {
-          locationStats[currentLocation] = 0;
-        }
-        locationStats[currentLocation] += days;
-      }
-      
-      // 开始新的地点记录
-      currentLocation = location;
-      startDate = date;
+    let daysAtLocation;
+    if (i < sortedDates.length - 1) {
+      // 计算从当前记录日期到下一条记录日期之间的天数
+      const nextDate = new Date(sortedDates[i + 1]);
+      const currDate = new Date(currentDate);
+      daysAtLocation = Math.floor((nextDate - currDate) / (1000 * 60 * 60 * 24));
+    } else {
+      // 最后一条记录：从记录日期到今天的天数
+      const currDate = new Date(currentDate);
+      const today = new Date();
+      daysAtLocation = Math.floor((today - currDate) / (1000 * 60 * 60 * 24)) + 1;
     }
     
-    // 处理最后一条记录
-    if (index === sortedDates.length - 1) {
-      const endDate = new Date(date);
-      const days = Math.floor((endDate - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
-      
-      if (!locationStats[currentLocation]) {
-        locationStats[currentLocation] = 0;
-      }
-      locationStats[currentLocation] += days;
+    if (!locationStats[currentLocation]) {
+      locationStats[currentLocation] = 0;
     }
-  });
+    locationStats[currentLocation] += daysAtLocation;
+  }
   
   // 计算总天数和百分比
   const totalDays = Object.values(locationStats).reduce((sum, days) => sum + days, 0);
