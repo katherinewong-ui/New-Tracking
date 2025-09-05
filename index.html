@@ -107,7 +107,10 @@ cursor: pointer;
 <input type="date" id="locationDate" class="border border-primary px-4 py-2 !rounded-button">
 </div>
 </div>
-<div class="h-[300px] w-full bg-cover bg-center rounded-lg overflow-hidden mb-6" style="background-image: url('https://ai-public.mastergo.com/gen_page/map_placeholder_1280x720.png')"></div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+<div class="h-[300px] w-full bg-cover bg-center rounded-lg overflow-hidden" style="background-image: url('https://ai-public.mastergo.com/gen_page/map_placeholder_1280x720.png')"></div>
+<div id="locationPieChart" class="h-[300px] w-full bg-white rounded-lg shadow-sm p-4"></div>
+</div>
 <div class="space-y-4">
 <div class="flex items-center justify-between p-4 bg-background rounded-lg">
 <div>
@@ -285,6 +288,7 @@ cursor: pointer;
 // 初始化图表
 const glucoseChart = echarts.init(document.getElementById('glucoseChart'));
 const weightChart = echarts.init(document.getElementById('weightChart'));
+const locationPieChart = echarts.init(document.getElementById('locationPieChart'));
 
 // 数据存储
 let healthData = {
@@ -314,6 +318,80 @@ function updateUI() {
   updateWeightUI();
 }
 
+// 计算位置百分比并更新饼图
+function updateLocationPieChart() {
+  const locationData = healthData.location || {};
+  
+  // 统计每个位置的出现次数
+  const locationCounts = {};
+  Object.values(locationData).forEach(location => {
+    locationCounts[location] = (locationCounts[location] || 0) + 1;
+  });
+  
+  // 转换为饼图数据格式
+  const pieData = Object.entries(locationCounts).map(([name, value]) => ({
+    name,
+    value
+  }));
+  
+  if (pieData.length === 0) {
+    locationPieChart.setOption({
+      title: {
+        text: '暂无位置数据',
+        left: 'center',
+        top: 'center',
+        textStyle: {
+          color: '#999',
+          fontSize: 16,
+          fontWeight: 'normal'
+        }
+      },
+      series: []
+    });
+    return;
+  }
+  
+  const option = {
+    title: {
+      text: '位置分布',
+      left: 'center',
+      textStyle: {
+        fontSize: 16
+      }
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{a} <br/>{b}: {c}次 ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      left: 'left',
+      type: 'scroll',
+      height: 200
+    },
+    series: [
+      {
+        name: '位置',
+        type: 'pie',
+        radius: '60%',
+        data: pieData,
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        },
+        label: {
+          formatter: '{b}: {c}次 ({d}%)'
+        }
+      }
+    ]
+  };
+  
+  locationPieChart.setOption(option);
+}
+
 // 更新位置UI
 function updateLocationUI() {
   const today = new Date().toISOString().split('T')[0];
@@ -332,6 +410,7 @@ function updateLocationUI() {
     locationHistory.innerHTML = '<p class="text-gray-500 text-center py-4">暂无历史记录</p>';
     currentLocation.textContent = '暂无记录';
     locationDuration.textContent = '停留时间：0 天';
+    updateLocationPieChart();
     return;
   }
   
@@ -368,6 +447,9 @@ function updateLocationUI() {
       updateLocationUI();
     });
   });
+  
+  // 更新饼图
+  updateLocationPieChart();
 }
 
 // 更新血糖UI
@@ -693,6 +775,7 @@ document.addEventListener('DOMContentLoaded', function() {
   window.addEventListener('resize', function() {
     glucoseChart.resize();
     weightChart.resize();
+    locationPieChart.resize();
   });
 });
 </script>
