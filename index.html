@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家庭健康记录 - 爱的关怀</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #FF9E80;
+            --secondary: #81D4FA;
+            --accent: #FFCC80;
+            --light: #FFF3E0;
+            --dark: #5D4037;
+            --success: #AED581;
+            --warning: #FFB74D;
+            --text: #4E342E;
+            --shadow: rgba(93, 64, 55, 0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #FBE9E7;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffab91' fill-opacity='0.2' fill-rule='evenodd'/%3E%3C/svg%3E");
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 头部样式 */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px var(--shadow);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+        }
+        
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px var(--shadow);
+            border-left: 5px solid var(--primary);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px dashed var(--light);
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title i {
+            color: var(--primary);
+        }
+        
+        /* 标签样式 */
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px var(--shadow);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            background: white;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .tab:hover {
+            background: var(--light);
+        }
+        
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #E0E0E0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        
+        .input-with-button {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .input-with-button input {
+            flex: 1;
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        button:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px var(--shadow);
+        }
+        
+        button.secondary {
+            background: var(--secondary);
+        }
+        
+        button.success {
+            background: var(--success);
+        }
+        
+        /* 图表容器 */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        /* 数据表格 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px var(--shadow);
+        }
+        
+        .data-table th, .data-table td {
+            border: 1px solid #E0E0E0;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        
+        .data-table th {
+            background-color: var(--light);
+            color: var(--dark);
+        }
+        
+        .data-table tr:nth-child(even) {
+            background-color: #FFF9C4;
+        }
+        
+        .data-table tr:hover {
+            background-color: #FFECB3;
+        }
+        
+        /* 编辑指示器 */
+        .editable {
+            position: relative;
+        }
+        
+        .editable::after {
+            content: "✎ 可编辑";
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--success);
+            color: white;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* 家庭照片区域 */
+        .family-photos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .family-photo {
+            height: 150px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px var(--shadow);
+            background: #BBDEFB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--dark);
+            font-weight: bold;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .input-with-button {
+                flex-direction: column;
+            }
+            
+            header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+            
+            .family-photos {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        /* 温馨提示 */
+        .tip {
+            background: #E3F2FD;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .tip i {
+            font-size: 24px;
+            color: var(--secondary);
+        }
+        
+        /* 家庭成员标签 */
+        .family-member-tag {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background: var(--accent);
+            color: var(--dark);
+            margin: 0 5px 5px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-heart"></i> 家庭健康记录</h1>
+            <p>记录我们一家的健康与快乐时光</p>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="dashboard">
+                <i class="fas fa-home"></i> 家庭主页
+            </div>
+            <div class="tab" data-tab="location">
+                <i class="fas fa-map-marker-alt"></i> 位置记录
+            </div>
+            <div class="tab" data-tab="glucose">
+                <i class="fas fa-tint"></i> 血糖监测
+            </div>
+            <div class="tab" data-tab="weight">
+                <i class="fas fa-weight"></i> 体重记录
+            </div>
+        </div>
+        
+        <!-- 家庭主页 -->
+        <div class="tab-content active" id="dashboard-tab">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-smile"></i> 欢迎回家！</h2>
+                </div>
+                <p>这里是我们的家庭健康记录空间，每个人都可以更新和查看健康数据。</p>
+                
+                <div class="tip">
+                    <i class="fas fa-info-circle"></i>
+                    <div>提示：点击上方标签切换不同功能，带有 <span style="color: #4CAF50;">"✎ 可编辑"</span> 标记的区域都可以编辑哦！</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-users"></i> 家庭成员</h2>
+                </div>
+                <div>
+                    <span class="family-member-tag">爸爸</span>
+                    <span class="family-member-tag">妈妈</span>
+                    <span class="family-member-tag">小明</span>
+                    <span class="family-member-tag">小红</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-camera"></i> 家庭照片墙</h2>
+                </div>
+                <div class="family-photos">
+                    <div class="family-photo">添加照片</div>
+                    <div class="family-photo">添加照片</div>
+                    <div class="family-photo">添加照片</div>
+                    <div class="family-photo">添加照片</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 位置记录页 -->
+        <div class="tab-content" id="location-tab">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-map-marker-alt"></i> 爸爸今日位置</h2>
+                    <span class="editable"></span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="location-input"><i class="fas fa-edit"></i> 记录位置</label>
+                    <div class="input-with-button">
+                        <input type="text" id="location-input" placeholder="请输入爸爸今天的位置">
+                        <button class="success"><i class="fas fa-check"></i> 保存</button>
+                    </div>
+                </div>
+                
+                <div class="tip">
+                    <i class="fas fa-lightbulb"></i>
+                    <div>小提示：如果今天没有更新位置，系统会自动使用昨天的位置信息哦！</div>
+                </div>
+                
+                <h3><i class="fas fa-history"></i> 最近位置记录</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>位置</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>2023-11-05</td>
+                            <td>北京市朝阳区家中</td>
+                            <td><button class="secondary"><i class="fas fa-edit"></i> 编辑</button></td>
+                        </tr>
+                        <tr>
+                            <td>2023-11-04</td>
+                            <td>北京市海淀区科技园</td>
+                            <td><button class="secondary"><i class="fas fa-edit"></i> 编辑</button></td>
+                        </tr>
+                        <tr>
+                            <td>2023-11-03</td>
+                            <td>天津市滨海新区客户办公室</td>
+                            <td><button class="secondary"><i class="fas fa-edit"></i> 编辑</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 血糖监测页 -->
+        <div class="tab-content" id="glucose-tab">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-tint"></i> 爸爸的血糖记录</h2>
+                    <span class="editable"></span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="glucose-date"><i class="fas fa-calendar"></i> 选择日期</label>
+                    <input type="date" id="glucose-date" value="2023-11-05">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-edit"></i> 血糖数据 (mmol/L)</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label for="fasting">空腹血糖</label>
+                            <input type="number" step="0.1" id="fasting" placeholder="例如: 5.6">
+                        </div>
+                        <div>
+                            <label for="before-breakfast">早餐前</label>
+                            <input type="number" step="0.1" id="before-breakfast" placeholder="例如: 5.8">
+                        </div>
+                        <div>
+                            <label for="after-breakfast">早餐后2h</label>
+                            <input type="number" step="0.1" id="after-breakfast" placeholder="例如: 7.2">
+                        </div>
+                        <div>
+                            <label for="before-lunch">午餐前</label>
+                            <input type="number" step="0.1" id="before-lunch" placeholder="例如: 6.1">
+                        </div>
+                        <div>
+                            <label for="after-lunch">午餐后2h</label>
+                            <input type="number" step="0.1" id="after-lunch" placeholder="例如: 7.8">
+                        </div>
+                        <div>
+                            <label for="before-dinner">晚餐前</label>
+                            <input type="number" step="0.1" id="before-dinner" placeholder="例如: 6.2">
+                        </div>
+                        <div>
+                            <label for="after-dinner">晚餐后2h</label>
+                            <input type="number" step="0.1" id="after-dinner" placeholder="例如: 7.5">
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="success"><i class="fas fa-save"></i> 保存血糖数据</button>
+                
+                <h3><i class="fas fa-chart-line"></i> 血糖趋势图</h3>
+                <div class="chart-container">
+                    <canvas id="glucose-chart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 体重记录页 -->
+        <div class="tab-content" id="weight-tab">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-weight"></i> 家庭成员体重记录</h2>
+                    <span class="editable"></span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="weight-member"><i class="fas fa-user"></i> 选择家庭成员</label>
+                    <select id="weight-member">
+                        <option value="dad">爸爸</option>
+                        <option value="mom">妈妈</option>
+                        <option value="son">小明</option>
+                        <option value="daughter">小红</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="weight-date"><i class="fas fa-calendar"></i> 选择日期</label>
+                    <input type="date" id="weight-date" value="2023-11-05">
+                </div>
+                
+                <div class="form-group">
+                    <label for="weight-value"><i class="fas fa-weight"></i> 体重 (kg)</label>
+                    <div class="input-with-button">
+                        <input type="number" step="0.1" id="weight-value" placeholder="例如: 65.5">
+                        <button class="success"><i class="fas fa-save"></i> 记录体重</button>
+                    </div>
+                </div>
+                
+                <h3><i class="fas fa-chart-line"></i> 体重变化趋势</h3>
+                <div class="chart-container">
+                    <canvas id="weight-chart"></canvas>
+                </div>
+                
+                <h3><i class="fas fa-history"></i> 最近体重记录</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>家庭成员</th>
+                            <th>体重 (kg)</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>2023-11-05</td>
+                            <td>爸爸</td>
+                            <td>70.5</td>
+                            <td><button class="secondary"><i class="fas fa-edit"></i> 编辑</button></td>
+                        </tr>
+                        <tr>
+                            <td>2023-11-05</td>
+                            <td>妈妈</td>
+                            <td>58.2</td>
+                            <td><button class="secondary"><i class="fas fa-edit"></i> 编辑</button></td>
+                        </tr>
+                        <tr>
+                            <td>2023-11-04</td>
+                            <td>爸爸</td>
+                            <td>70.8</td>
+                            <td><button class="secondary"><i class="fas fa-edit"></i> 编辑</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 标签切换功能
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // 移除所有active类
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                
+                // 添加active类到当前标签
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+        
+        // 初始化血糖图表
+        const glucoseCtx = document.getElementById('glucose-chart').getContext('2d');
+        const glucoseChart = new Chart(glucoseCtx, {
+            type: 'line',
+            data: {
+                labels: ['11-01', '11-02', '11-03', '11-04', '11-05'],
+                datasets: [{
+                    label: '空腹血糖',
+                    data: [5.6, 5.8, 5.9, 5.7, 5.6],
+                    borderColor: '#FF9E80',
+                    backgroundColor: 'rgba(255, 158, 128, 0.2)',
+                    tension: 0.3,
+                    fill: true
+                }, {
+                    label: '早餐后2h',
+                    data: [7.2, 7.5, 7.8, 7.3, 7.2],
+                    borderColor: '#81D4FA',
+                    backgroundColor: 'rgba(129, 212, 250, 0.2)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: '爸爸的血糖趋势',
+                        font: {
+                            size: 16
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 4,
+                        max: 10,
+                        title: {
+                            display: true,
+                            text: '血糖值 (mmol/L)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 初始化体重图表
+        const weightCtx = document.getElementById('weight-chart').getContext('2d');
+        const weightChart = new Chart(weightCtx, {
+            type: 'line',
+            data: {
+                labels: ['10-20', '10-25', '10-30', '11-05'],
+                datasets: [{
+                    label: '爸爸',
+                    data: [71.5, 71.0, 70.8, 70.5],
+                    borderColor: '#FF9E80',
+                    backgroundColor: 'rgba(255, 158, 128, 0.2)',
+                    tension: 0.3,
+                    fill: true
+                }, {
+                    label: '妈妈',
+                    data: [59.0, 58.8, 58.5, 58.2],
+                    borderColor: '#81D4FA',
+                    backgroundColor: 'rgba(129, 212, 250, 0.2)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: '家庭成员体重变化',
+                        font: {
+                            size: 16
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: '体重 (kg)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 设置当前日期
+        const today = new Date();
+        document.getElementById('current-date').textContent = `今天是 ${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+    </script>
+</body>
+</html>
