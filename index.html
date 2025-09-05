@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>家庭健康管理</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- 添加Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script>
 tailwind.config = {
 theme: {
@@ -80,18 +77,6 @@ font-size: 28px;
 font-weight: bold;
 cursor: pointer;
 }
-.loading {
-display: inline-block;
-width: 20px;
-height: 20px;
-border: 3px solid rgba(255,178,107,.3);
-border-radius: 50%;
-border-top-color: #FFB26B;
-animation: spin 1s ease-in-out infinite;
-}
-@keyframes spin {
-to { transform: rotate(360deg); }
-}
 </style>
 </head>
 <body>
@@ -110,15 +95,6 @@ to { transform: rotate(360deg); }
 </div>
 </header>
 <main class="pt-16">
-<!-- 添加连接状态指示器 -->
-<div id="connectionStatus" class="fixed top-16 right-4 z-50 bg-white shadow-md rounded-lg p-2 hidden">
-<span class="text-sm flex items-center">
-<i class="fas fa-wifi mr-2 text-green-500 connected-icon"></i>
-<i class="fas fa-wifi-slash mr-2 text-red-500 disconnected-icon hidden"></i>
-<span class="status-text">已连接</span>
-</span>
-</div>
-
 <section id="location" class="py-12">
 <div class="max-w-7xl mx-auto px-4">
 <h2 class="text-2xl font-bold mb-8">Dad's Location Tracking</h2>
@@ -238,10 +214,7 @@ to { transform: rotate(360deg); }
 <label class="block text-gray-700 mb-2">位置</label>
 <input type="text" id="modalLocation" class="w-full border border-gray-300 px-3 py-2 rounded" placeholder="请输入位置" required>
 </div>
-<button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90">
-<span id="locationSubmitText">保存</span>
-<span id="locationLoading" class="loading hidden ml-2"></span>
-</button>
+<button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90">保存</button>
 </form>
 </div>
 </div>
@@ -286,10 +259,7 @@ to { transform: rotate(360deg); }
 <input type="number" step="0.1" id="afterDinner" class="w-full border border-gray-300 px-3 py-2 rounded" placeholder="mmol/L">
 </div>
 </div>
-<button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90">
-<span id="glucoseSubmitText">保存</span>
-<span id="glucoseLoading" class="loading hidden ml-2"></span>
-</button>
+<button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90">保存</button>
 </form>
 </div>
 </div>
@@ -316,81 +286,12 @@ to { transform: rotate(360deg); }
 <label class="block text-gray-700 mb-2">体重 (kg)</label>
 <input type="number" step="0.1" id="modalWeight" class="w-full border border-gray-300 px-3 py-2 rounded" placeholder="请输入体重" required>
 </div>
-<button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90">
-<span id="weightSubmitText">保存</span>
-<span id="weightLoading" class="loading hidden ml-2"></span>
-</button>
+<button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90">保存</button>
 </form>
 </div>
 </div>
 
 <script>
-// Firebase配置 - 您需要替换为自己的配置
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-
-// 初始化Firebase
-try {
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  
-  // 更新连接状态
-  firebase.firestore().enableNetwork()
-    .then(() => {
-      showConnectionStatus(true);
-    });
-  
-  // 监听连接状态
-  firebase.firestore().onSnapshotsInSync(() => {
-    showConnectionStatus(true);
-  });
-  
-  // 监听网络状态变化
-  firebase.firestore().waitForPendingWrites().then(() => {
-    showConnectionStatus(true);
-  }).catch(() => {
-    showConnectionStatus(false);
-  });
-} catch (e) {
-  console.error("Firebase初始化错误:", e);
-  showConnectionStatus(false);
-}
-
-// 显示连接状态
-function showConnectionStatus(connected) {
-  const statusElement = document.getElementById('connectionStatus');
-  const statusText = statusElement.querySelector('.status-text');
-  const connectedIcon = statusElement.querySelector('.connected-icon');
-  const disconnectedIcon = statusElement.querySelector('.disconnected-icon');
-  
-  statusElement.classList.remove('hidden');
-  
-  if (connected) {
-    statusText.textContent = '已连接';
-    connectedIcon.classList.remove('hidden');
-    disconnectedIcon.classList.add('hidden');
-    statusElement.classList.remove('bg-red-100', 'text-red-800');
-    statusElement.classList.add('bg-green-100', 'text-green-800');
-  } else {
-    statusText.textContent = '离线模式';
-    connectedIcon.classList.add('hidden');
-    disconnectedIcon.classList.remove('hidden');
-    statusElement.classList.remove('bg-green-100', 'text-green-800');
-    statusElement.classList.add('bg-red-100', 'text-red-800');
-  }
-  
-  // 5秒后隐藏状态提示
-  setTimeout(() => {
-    statusElement.classList.add('hidden');
-  }, 5000);
-}
-
 // 初始化图表
 const glucoseChart = echarts.init(document.getElementById('glucoseChart'));
 const weightChart = echarts.init(document.getElementById('weightChart'));
@@ -403,128 +304,18 @@ let healthData = {
   weight: {}
 };
 
-// 从Firestore加载数据
+// 从localStorage加载数据
 function loadData() {
-  // 显示加载状态
-  showLoadingState(true);
-  
-  // 获取位置数据
-  db.collection("locations").orderBy("date", "desc").get()
-    .then((querySnapshot) => {
-      healthData.location = {};
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        healthData.location[data.date] = data.location;
-      });
-      updateLocationUI();
-      updateLocationStatsUI();
-    })
-    .catch((error) => {
-      console.error("获取位置数据错误:", error);
-      showConnectionStatus(false);
-    });
-  
-  // 获取血糖数据
-  db.collection("glucose").orderBy("date", "asc").get()
-    .then((querySnapshot) => {
-      healthData.glucose = {};
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        healthData.glucose[data.date] = {
-          fasting: data.fasting || null,
-          beforeBreakfast: data.beforeBreakfast || null,
-          afterBreakfast: data.afterBreakfast || null,
-          beforeLunch: data.beforeLunch || null,
-          afterLunch: data.afterLunch || null,
-          beforeDinner: data.beforeDinner || null,
-          afterDinner: data.afterDinner || null
-        };
-      });
-      updateGlucoseUI();
-    })
-    .catch((error) => {
-      console.error("获取血糖数据错误:", error);
-      showConnectionStatus(false);
-    });
-  
-  // 获取体重数据
-  db.collection("weights").get()
-    .then((querySnapshot) => {
-      healthData.weight = { dad: {}, mom: {}, me: {} };
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (!healthData.weight[data.member]) healthData.weight[data.member] = {};
-        healthData.weight[data.member][data.date] = data.weight;
-      });
-      updateWeightUI();
-      showLoadingState(false);
-    })
-    .catch((error) => {
-      console.error("获取体重数据错误:", error);
-      showConnectionStatus(false);
-      showLoadingState(false);
-    });
-  
-  // 设置实时监听
-  setupRealtimeListeners();
+  const savedData = localStorage.getItem('healthData');
+  if (savedData) {
+    healthData = JSON.parse(savedData);
+  }
+  updateUI();
 }
 
-// 设置实时监听
-function setupRealtimeListeners() {
-  // 监听位置数据变化
-  db.collection("locations").orderBy("date", "desc")
-    .onSnapshot((querySnapshot) => {
-      healthData.location = {};
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        healthData.location[data.date] = data.location;
-      });
-      updateLocationUI();
-      updateLocationStatsUI();
-    });
-  
-  // 监听血糖数据变化
-  db.collection("glucose").orderBy("date", "asc")
-    .onSnapshot((querySnapshot) => {
-      healthData.glucose = {};
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        healthData.glucose[data.date] = {
-          fasting: data.fasting || null,
-          beforeBreakfast: data.beforeBreakfast || null,
-          afterBreakfast: data.afterBreakfast || null,
-          beforeLunch: data.beforeLunch || null,
-          afterLunch: data.afterLunch || null,
-          beforeDinner: data.beforeDinner || null,
-          afterDinner: data.afterDinner || null
-        };
-      });
-      updateGlucoseUI();
-    });
-  
-  // 监听体重数据变化
-  db.collection("weights")
-    .onSnapshot((querySnapshot) => {
-      healthData.weight = { dad: {}, mom: {}, me: {} };
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (!healthData.weight[data.member]) healthData.weight[data.member] = {};
-        healthData.weight[data.member][data.date] = data.weight;
-      });
-      updateWeightUI();
-    });
-}
-
-// 显示/隐藏加载状态
-function showLoadingState(show) {
-  const loadingElements = document.querySelectorAll('.loading-state');
-  loadingElements.forEach(el => {
-    if (show) {
-      el.classList.remove('hidden');
-    } else {
-      el.classList.add('hidden');
-    }
-  });
+// 保存数据到localStorage
+function saveData() {
+  localStorage.setItem('healthData', JSON.stringify(healthData));
 }
 
 // 更新UI显示
@@ -532,7 +323,7 @@ function updateUI() {
   updateLocationUI();
   updateGlucoseUI();
   updateWeightUI();
-  updateLocationStatsUI();
+  updateLocationStatsUI(); // 新增：更新地点停留统计
 }
 
 // 更新位置UI
@@ -595,18 +386,10 @@ function updateLocationUI() {
   document.querySelectorAll('.delete-location').forEach(button => {
     button.addEventListener('click', function() {
       const date = this.getAttribute('data-date');
-      
-      // 从Firestore删除
-      db.collection("locations").where("date", "==", date).get()
-        .then((querySnapshot) => {
-          querySnapshot.forEach((doc) => {
-            doc.ref.delete();
-          });
-        })
-        .catch((error) => {
-          console.error("删除位置记录错误:", error);
-          showConnectionStatus(false);
-        });
+      delete healthData.location[date];
+      saveData();
+      updateLocationUI();
+      updateLocationStatsUI(); // 更新统计
     });
   });
 }
@@ -982,9 +765,7 @@ function setupModals() {
   // 关闭模态框
   closeButtons.forEach(button => {
     button.addEventListener('click', function() {
-      modals.forEach(modal => {
-        modal.style.display = 'none';
-      });
+      modals.forEach(modal => modal.style.display = 'none');
     });
   });
   
@@ -1003,67 +784,36 @@ function setupModals() {
     const date = document.getElementById('modalLocationDate').value;
     const location = document.getElementById('modalLocation').value;
     
-    // 显示加载状态
-    document.getElementById('locationLoading').classList.remove('hidden');
-    document.getElementById('locationSubmitText').classList.add('hidden');
+    if (!healthData.location) healthData.location = {};
+    healthData.location[date] = location;
     
-    // 保存到Firestore
-    db.collection("locations").add({
-      date: date,
-      location: location
-    })
-    .then(() => {
-      document.getElementById('locationModal').style.display = 'none';
-      this.reset();
-    })
-    .catch((error) => {
-      console.error("保存位置数据错误:", error);
-      showConnectionStatus(false);
-    })
-    .finally(() => {
-      document.getElementById('locationLoading').classList.add('hidden');
-      document.getElementById('locationSubmitText').classList.remove('hidden');
-    });
+    saveData();
+    updateLocationUI();
+    updateLocationStatsUI(); // 更新统计
+    document.getElementById('locationModal').style.display = 'none';
+    this.reset();
   });
   
   document.getElementById('glucoseForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const date = document.getElementById('modalGlucoseDate').value;
-    const fasting = document.getElementById('fastingGlucose').value || null;
-    const beforeBreakfast = document.getElementById('beforeBreakfast').value || null;
-    const afterBreakfast = document.getElementById('afterBreakfast').value || null;
-    const beforeLunch = document.getElementById('beforeLunch').value || null;
-    const afterLunch = document.getElementById('afterLunch').value || null;
-    const beforeDinner = document.getElementById('beforeDinner').value || null;
-    const afterDinner = document.getElementById('afterDinner').value || null;
+    const glucoseData = {
+      fasting: document.getElementById('fastingGlucose').value ? parseFloat(document.getElementById('fastingGlucose').value) : null,
+      beforeBreakfast: document.getElementById('beforeBreakfast').value ? parseFloat(document.getElementById('beforeBreakfast').value) : null,
+      afterBreakfast: document.getElementById('afterBreakfast').value ? parseFloat(document.getElementById('afterBreakfast').value) : null,
+      beforeLunch: document.getElementById('beforeLunch').value ? parseFloat(document.getElementById('beforeLunch').value) : null,
+      afterLunch: document.getElementById('afterLunch').value ? parseFloat(document.getElementById('afterLunch').value) : null,
+      beforeDinner: document.getElementById('beforeDinner').value ? parseFloat(document.getElementById('beforeDinner').value) : null,
+      afterDinner: document.getElementById('afterDinner').value ? parseFloat(document.getElementById('afterDinner').value) : null
+    };
     
-    // 显示加载状态
-    document.getElementById('glucoseLoading').classList.remove('hidden');
-    document.getElementById('glucoseSubmitText').classList.add('hidden');
+    if (!healthData.glucose) healthData.glucose = {};
+    healthData.glucose[date] = glucoseData;
     
-    // 保存到Firestore
-    db.collection("glucose").add({
-      date: date,
-      fasting: fasting ? parseFloat(fasting) : null,
-      beforeBreakfast: beforeBreakfast ? parseFloat(beforeBreakfast) : null,
-      afterBreakfast: afterBreakfast ? parseFloat(afterBreakfast) : null,
-      beforeLunch: beforeLunch ? parseFloat(beforeLunch) : null,
-      afterLunch: afterLunch ? parseFloat(afterLunch) : null,
-      beforeDinner: beforeDinner ? parseFloat(beforeDinner) : null,
-      afterDinner: afterDinner ? parseFloat(afterDinner) : null
-    })
-    .then(() => {
-      document.getElementById('glucoseModal').style.display = 'none';
-      this.reset();
-    })
-    .catch((error) => {
-      console.error("保存血糖数据错误:", error);
-      showConnectionStatus(false);
-    })
-    .finally(() => {
-      document.getElementById('glucoseLoading').classList.add('hidden');
-      document.getElementById('glucoseSubmitText').classList.remove('hidden');
-    });
+    saveData();
+    updateGlucoseUI();
+    document.getElementById('glucoseModal').style.display = 'none';
+    this.reset();
   });
   
   document.getElementById('weightForm').addEventListener('submit', function(e) {
@@ -1072,53 +822,34 @@ function setupModals() {
     const date = document.getElementById('modalWeightDate').value;
     const weight = parseFloat(document.getElementById('modalWeight').value);
     
-    // 显示加载状态
-    document.getElementById('weightLoading').classList.remove('hidden');
-    document.getElementById('weightSubmitText').classList.add('hidden');
+    if (!healthData.weight) healthData.weight = {};
+    if (!healthData.weight[member]) healthData.weight[member] = {};
+    healthData.weight[member][date] = weight;
     
-    // 保存到Firestore
-    db.collection("weights").add({
-      member: member,
-      date: date,
-      weight: weight
-    })
-    .then(() => {
-      document.getElementById('weightModal').style.display = 'none';
-      this.reset();
-    })
-    .catch((error) => {
-      console.error("保存体重数据错误:", error);
-      showConnectionStatus(false);
-    })
-    .finally(() => {
-      document.getElementById('weightLoading').classList.add('hidden');
-      document.getElementById('weightSubmitText').classList.remove('hidden');
-    });
+    saveData();
+    updateWeightUI();
+    document.getElementById('weightModal').style.display = 'none';
+    this.reset();
   });
 }
 
 // 初始化
-function init() {
-  setupModals();
-  
-  // 设置日期输入默认值为今天
+document.addEventListener('DOMContentLoaded', function() {
+  // 设置日期输入框默认值为今天
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('locationDate').value = today;
   document.getElementById('glucoseDate').value = today;
   
-  // 加载数据
   loadData();
+  setupModals();
   
-  // 监听窗口大小变化，重新渲染图表
+  // 添加窗口调整大小时重绘图表
   window.addEventListener('resize', function() {
     glucoseChart.resize();
     weightChart.resize();
     locationStatsChart.resize();
   });
-}
-
-// 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', init);
+});
 </script>
 </body>
 </html>
