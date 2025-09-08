@@ -29,31 +29,21 @@ DEFAULT: '4px',
 }
 }
 }
-  /*
-  <!-- 在head中添加Supabase客户端库 -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-*/
+
 
   
-  <script>
-    // 先加载Supabase库，然后立即初始化
-    document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');
-    
-    // 初始化代码（会在Supabase库加载后执行）
-    setTimeout(() => {
-      const SUPABASE_URL = 'https://ebhunheydqseixhzvpaz.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViaHVuaGV5ZHFzZWl4aHp2cGF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTg2MjEsImV4cCI6MjA3Mjg3NDYyMX0.VKVYpGiCqIO70N9i0y6KQZme9fm64-ECsnm3MkGxtcM';
-      window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      console.log("Supabase初始化完成");
-    }, 100);
-  
-
 </script>
+<!-- 正确加载Supabase客户端库 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+
+
+
 <style>
 body {
 min-height: 1024px;
@@ -310,6 +300,37 @@ cursor: pointer;
 </div>
 
 <script>
+// 全局变量
+let supabase = null;
+let healthData = {
+  location: {},
+  glucose: {},
+  weight: {}
+};
+
+// 初始化Supabase
+function initSupabase() {
+  try {
+    const SUPABASE_URL = 'https://ebhunheydqseixhzvpaz.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViaHVuaGV5ZHFzZWl4aHp2cGF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTg2MjEsImV4cCI6MjA3Mjg3NDYyMX0.VKVYpGiCqIO70N9i0y6KQZme9fm64-ECsnm3MkGxtcM';
+    
+    // 检查supabase对象是否存在
+    if (typeof window.supabase === 'undefined') {
+      console.error('Supabase库未正确加载');
+      alert('Supabase库加载失败，请刷新页面重试');
+      return false;
+    }
+    
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log("Supabase初始化完成");
+    return true;
+  } catch (error) {
+    console.error("Supabase初始化错误:", error);
+    alert('Supabase初始化失败: ' + error.message);
+    return false;
+  }
+}
+  
 // 初始化图表
 const glucoseChart = echarts.init(document.getElementById('glucoseChart'));
 const weightChart = echarts.init(document.getElementById('weightChart'));
@@ -321,22 +342,6 @@ let healthData = {
   glucose: {},
   weight: {}
 };
-
-/*
-// 从localStorage加载数据
-function loadData() {
-  const savedData = localStorage.getItem('healthData');
-  if (savedData) {
-    healthData = JSON.parse(savedData);
-  }
-  updateUI();
-}
-
-// 保存数据到localStorage
-function saveData() {
-  localStorage.setItem('healthData', JSON.stringify(healthData));
-}
-*/
 
   
 // 从Supabase加载数据
@@ -1135,6 +1140,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
 
 
 
