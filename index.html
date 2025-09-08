@@ -22,7 +22,6 @@
   };
   
   
-  <script>
 tailwind.config = {
 theme: {
 extend: {
@@ -398,16 +397,97 @@ async function loadData() {
     }
     
     updateUI();
-    
-    // 设置实时订阅（可选）
-    setupRealtimeSubscriptions();
-  } catch (error) {
+ } catch (error) {
     console.error('加载数据错误:', error);
     alert('加载数据失败，请检查网络连接或刷新页面重试');
   }
 }
+
+  // 保存位置数据到Supabase
+async function saveLocation(date, location) {
+  try {
+    const { data, error } = await supabase
+      .from('locations')
+      .upsert({ date, location })
+      .select();
     
+    if (error) {
+      console.error('保存位置错误:', error);
+      alert('保存位置失败，请重试');
+      return false;
+    }
     
+    // 更新本地数据
+    if (!healthData.location) healthData.location = {};
+    healthData.location[date] = location;
+    
+    return true;
+  } catch (error) {
+    console.error('保存位置异常:', error);
+    return false;
+  }
+}
+
+// 保存血糖数据到Supabase
+async function saveGlucose(date, glucoseData) {
+  try {
+    const { data, error } = await supabase
+      .from('glucose')
+      .upsert({
+        date,
+        fasting: glucoseData.fasting,
+        before_breakfast: glucoseData.beforeBreakfast,
+        after_breakfast: glucoseData.afterBreakfast,
+        before_lunch: glucoseData.beforeLunch,
+        after_lunch: glucoseData.afterLunch,
+        before_dinner: glucoseData.beforeDinner,
+        after_dinner: glucoseData.afterDinner
+      })
+      .select();
+    
+    if (error) {
+      console.error('保存血糖错误:', error);
+      alert('保存血糖数据失败，请重试');
+      return false;
+    }
+    
+    // 更新本地数据
+    if (!healthData.glucose) healthData.glucose = {};
+    healthData.glucose[date] = glucoseData;
+    
+    return true;
+  } catch (error) {
+    console.error('保存血糖异常:', error);
+    return false;
+  }
+}
+
+// 保存体重数据到Supabase
+async function saveWeight(member, date, weight) {
+  try {
+    const { data, error } = await supabase
+      .from('weights')
+      .upsert({ member, date, weight })
+      .select();
+    
+    if (error) {
+      console.error('保存体重错误:', error);
+      alert('保存体重失败，请重试');
+      return false;
+    }
+    
+    // 更新本地数据
+    if (!healthData.weight) healthData.weight = {};
+    if (!healthData.weight[member]) healthData.weight[member] = {};
+    healthData.weight[member][date] = weight;
+    
+    return true;
+  } catch (error) {
+    console.error('保存体重异常:', error);
+    return false;
+  }
+}
+   
 
 // 更新UI显示
 function updateUI() {
@@ -472,7 +552,8 @@ function updateLocationUI() {
     `;
     locationHistory.appendChild(locationElement);
   });
-  
+
+/*
   // 添加删除事件监听
   document.querySelectorAll('.delete-location').forEach(button => {
     button.addEventListener('click', function() {
@@ -484,7 +565,38 @@ function updateLocationUI() {
     });
   });
 }
+*/
 
+// 添加删除事件监听
+  document.querySelectorAll('.delete-location').forEach(button => {
+    button.addEventListener('click', async function() {
+      const date = this.getAttribute('data-date');
+      
+      // 从Supabase删除
+      try {
+        const { error } = await supabase
+          .from('locations')
+          .delete()
+          .eq('date', date);
+        
+        if (error) {
+          console.error('删除位置错误:', error);
+          alert('删除位置失败，请重试');
+          return;
+        }
+        
+        // 从本地数据删除
+        delete healthData.location[date];
+        updateLocationUI();
+        updateLocationStatsUI();
+      } catch (error) {
+        console.error('删除位置异常:', error);
+      }
+    });
+  });
+}
+
+  
 // 更新地点停留统计UI
 function updateLocationStatsUI() {
   const locationStatsList = document.getElementById('locationStatsList');
@@ -871,91 +983,6 @@ function setupModals() {
   });
 
 
-  // 保存位置数据到Supabase
-async function saveLocation(date, location) {
-  try {
-    const { data, error } = await supabase
-      .from('locations')
-      .upsert({ date, location })
-      .select();
-    
-    if (error) {
-      console.error('保存位置错误:', error);
-      alert('保存位置失败，请重试');
-      return false;
-    }
-    
-    // 更新本地数据
-    if (!healthData.location) healthData.location = {};
-    healthData.location[date] = location;
-    
-    return true;
-  } catch (error) {
-    console.error('保存位置异常:', error);
-    return false;
-  }
-}
-
-// 保存血糖数据到Supabase
-async function saveGlucose(date, glucoseData) {
-  try {
-    const { data, error } = await supabase
-      .from('glucose')
-      .upsert({
-        date,
-        fasting: glucoseData.fasting,
-        before_breakfast: glucoseData.beforeBreakfast,
-        after_breakfast: glucoseData.afterBreakfast,
-        before_lunch: glucoseData.beforeLunch,
-        after_lunch: glucoseData.afterLunch,
-        before_dinner: glucoseData.beforeDinner,
-        after_dinner: glucoseData.afterDinner
-      })
-      .select();
-    
-    if (error) {
-      console.error('保存血糖错误:', error);
-      alert('保存血糖数据失败，请重试');
-      return false;
-    }
-    
-    // 更新本地数据
-    if (!healthData.glucose) healthData.glucose = {};
-    healthData.glucose[date] = glucoseData;
-    
-    return true;
-  } catch (error) {
-    console.error('保存血糖异常:', error);
-    return false;
-  }
-}
-
-// 保存体重数据到Supabase
-async function saveWeight(member, date, weight) {
-  try {
-    const { data, error } = await supabase
-      .from('weights')
-      .upsert({ member, date, weight })
-      .select();
-    
-    if (error) {
-      console.error('保存体重错误:', error);
-      alert('保存体重失败，请重试');
-      return false;
-    }
-    
-    // 更新本地数据
-    if (!healthData.weight) healthData.weight = {};
-    if (!healthData.weight[member]) healthData.weight[member] = {};
-    healthData.weight[member][date] = weight;
-    
-    return true;
-  } catch (error) {
-    console.error('保存体重异常:', error);
-    return false;
-  }
-}
-
 
 // 位置表单提交
 document.getElementById('locationForm').addEventListener('submit', async function(e) {
@@ -1106,4 +1133,5 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
 
