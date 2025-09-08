@@ -9,81 +9,97 @@
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
-<script src="https://cdn.tailwindcss.com"> </script>
+<script src="https://cdn.tailwindcss.com"></script>
 <script>
-tailwind.config = {
-theme: {
-extend: {
-colors: {
-primary: '#FFB26B',
-secondary: '#FFD4D4',
-background: '#FDFBF7',
-textPrimary: '#4A4A4A'
-},
-borderRadius: {
-'none': '0px',
-'sm': '2px',
-DEFAULT: '4px',
-'md': '8px',
-'lg': '12px',
-'xl': '16px',
-'2xl': '20px',
-'3xl': '24px',
-'full': '9999px',
-'button': '4px'
-}
-}
-}
-}
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          primary: '#FFB26B',
+          secondary: '#FFD4D4',
+          background: '#FDFBF7',
+          textPrimary: '#4A4A4A'
+        },
+        borderRadius: {
+          'none': '0px',
+          'sm': '2px',
+          DEFAULT: '4px',
+          'md': '8px',
+          'lg': '12px',
+          'xl': '16px',
+          '2xl': '20px',
+          '3xl': '24px',
+          'full': '9999px',
+          'button': '4px'
+        }
+      }
+    }
+  }
 </script>
-
 <style>
 body {
-min-height: 1024px;
-background-color: #FDFBF7;
-color: #4A4A4A;
+  min-height: 1024px;
+  background-color: #FDFBF7;
+  color: #4A4A4A;
 }
 input:focus {
-outline: none;
+  outline: none;
 }
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
--webkit-appearance: none;
-margin: 0;
+  -webkit-appearance: none;
+  margin: 0;
 }
 .modal {
-display: none;
-position: fixed;
-z-index: 100;
-left: 0;
-top: 0;
-width: 100%;
-height: 100%;
-overflow: auto;
-background-color: rgba(0,0,0,0.4);
+  display: none;
+  position: fixed;
+  z-index: 100;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.4);
 }
 .modal-content {
-background-color: #fefefe;
-margin: 10% auto;
-padding: 20px;
-border: 1px solid #888;
-width: 80%;
-max-width: 500px;
-border-radius: 12px;
+  background-color: #fefefe;
+  margin: 10% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 500px;
+  border-radius: 12px;
 }
 .close {
-color: #aaa;
-float: right;
-font-size: 28px;
-font-weight: bold;
-cursor: pointer;
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+#loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 </style>
 </head>
 <body>
+<!-- 加载提示 -->
+<div id="loading">
+  <div class="text-center">
+    <i class="fas fa-spinner fa-spin text-primary text-4xl mb-2"></i>
+    <p>加载中...</p>
+  </div>
+</div>
 
-
-  
 <header class="bg-white shadow-sm fixed w-full z-50">
 <div class="max-w-7xl mx-auto px-4">
 <div class="flex items-center justify-between h-16">
@@ -295,72 +311,72 @@ cursor: pointer;
 </div>
 </div>
 
-  <!-- 引入Supabase库 -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
+<!-- 引入Supabase库 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-   // 初始化变量
-        let supabase;
-        let glucoseChart, weightChart, locationStatsChart;
-  
-  // 数据存储
+// 初始化变量
+let supabase;
+let glucoseChart, weightChart, locationStatsChart;
+
+// 数据存储
 let healthData = {
   location: {},
   glucose: {},
   weight: {}
 };
 
-  // 初始化函数
-        async function initApp() {
-            try {
-                // 显示加载提示
-                document.getElementById('loading').style.display = 'flex';
-              
-                // 初始化Supabase客户端
-                const SUPABASE_URL = 'https://ebhunheydqseixhzvpaz.supabase.co';
-                const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViaHVuaGV5ZHFzZWl4aHp2cGF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTg2MjEsImV4cCI6MjA3Mjg3NDYyMX0.VKVYpGiCqIO70N9i0y6KQZme9fm64-ECsnm3MkGxtcM';
-              
-                 // 检查supabase是否已定义
-                if (typeof window.supabase !== 'undefined') {
-                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                    console.log("Supabase初始化完成");
-                } else {
-                    console.error("Supabase库未正确加载");
-                    alert("应用程序初始化失败，请刷新页面重试");
-                    return;
-                }
-              
-                // 初始化图表
-                glucoseChart = echarts.init(document.getElementById('glucoseChart'));
-                weightChart = echarts.init(document.getElementById('weightChart'));
-                locationStatsChart = echarts.init(document.getElementById('locationStatsChart'));
-                
-                 // 设置日期输入框默认值为今天
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('locationDate').value = today;
-                document.getElementById('glucoseDate').value = today;
+// 初始化函数
+async function initApp() {
+  try {
+    // 显示加载提示
+    document.getElementById('loading').style.display = 'flex';
+    
+    // 初始化Supabase客户端
+    const SUPABASE_URL = 'https://ebhunheydqseixhzvpaz.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViaHVuaGV5ZHFzZWl4aHp2cGF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTg2MjEsImV4cCI6MjA3Mjg3NDYyMX0.VKVYpGiCqIO70N9i0y6KQZme9fm64-ECsnm3MkGxtcM';
+    
+    // 检查supabase是否已定义
+    if (typeof window.supabase !== 'undefined') {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      console.log("Supabase初始化完成");
+    } else {
+      console.error("Supabase库未正确加载");
+      alert("应用程序初始化失败，请刷新页面重试");
+      return;
+    }
+    
+    // 初始化图表
+    glucoseChart = echarts.init(document.getElementById('glucoseChart'));
+    weightChart = echarts.init(document.getElementById('weightChart'));
+    locationStatsChart = echarts.init(document.getElementById('locationStatsChart'));
+    
+    // 设置日期输入框默认值为今天
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('locationDate').value = today;
+    document.getElementById('glucoseDate').value = today;
 
-                 // 加载数据
-                await loadData();
-                setupModals();
+    // 加载数据
+    await loadData();
+    setupModals();
 
-                // 添加窗口调整大小时重绘图表
-                window.addEventListener('resize', function() {
-                    glucoseChart.resize();
-                    weightChart.resize();
-                    locationStatsChart.resize();
-                });
-                
-                // 隐藏加载提示
-                document.getElementById('loading').style.display = 'none';
-                
-            } catch (error) {
-                console.error('初始化错误:', error);
-                document.getElementById('loading').style.display = 'none';
-                alert('应用程序初始化失败，请刷新页面重试');
-            }
-        }
-  
+    // 添加窗口调整大小时重绘图表
+    window.addEventListener('resize', function() {
+      glucoseChart.resize();
+      weightChart.resize();
+      locationStatsChart.resize();
+    });
+    
+    // 隐藏加载提示
+    document.getElementById('loading').style.display = 'none';
+    
+  } catch (error) {
+    console.error('初始化错误:', error);
+    document.getElementById('loading').style.display = 'none';
+    alert('应用程序初始化失败，请刷新页面重试');
+  }
+}
+
 // 从Supabase加载数据
 async function loadData() {
   try {
@@ -421,13 +437,13 @@ async function loadData() {
     }
     
     updateUI();
- } catch (error) {
+  } catch (error) {
     console.error('加载数据错误:', error);
     alert('加载数据失败，请检查网络连接或刷新页面重试');
   }
 }
 
-  // 保存位置数据到Supabase
+// 保存位置数据到Supabase
 async function saveLocation(date, location) {
   try {
     const { data, error } = await supabase
@@ -511,7 +527,6 @@ async function saveWeight(member, date, weight) {
     return false;
   }
 }
-   
 
 // 更新UI显示
 function updateUI() {
@@ -577,21 +592,7 @@ function updateLocationUI() {
     locationHistory.appendChild(locationElement);
   });
 
-/*
   // 添加删除事件监听
-  document.querySelectorAll('.delete-location').forEach(button => {
-    button.addEventListener('click', function() {
-      const date = this.getAttribute('data-date');
-      delete healthData.location[date];
-      saveData();
-      updateLocationUI();
-      updateLocationStatsUI(); // 更新统计
-    });
-  });
-}
-*/
-
-// 添加删除事件监听
   document.querySelectorAll('.delete-location').forEach(button => {
     button.addEventListener('click', async function() {
       const date = this.getAttribute('data-date');
@@ -620,7 +621,6 @@ function updateLocationUI() {
   });
 }
 
-  
 // 更新地点停留统计UI
 function updateLocationStatsUI() {
   const locationStatsList = document.getElementById('locationStatsList');
@@ -750,7 +750,6 @@ function updateLocationStatsUI() {
   locationStatsChart.setOption(option);
 }
 
-    
 // 更新血糖UI
 function updateGlucoseUI() {
   const glucoseData = healthData.glucose || {};
@@ -984,8 +983,9 @@ function setupModals() {
   // 打开体重模态框
   document.querySelectorAll('.edit-weight').forEach(button => {
     button.addEventListener('click', function() {
+      const member = this.getAttribute('data-member');
       document.getElementById('weightModal').style.display = 'block';
-      document.getElementById('modalWeightMember').value = this.getAttribute('data-member');
+      document.getElementById('modalWeightMember').value = member;
       document.getElementById('modalWeightDate').value = new Date().toISOString().split('T')[0];
     });
   });
@@ -1002,101 +1002,26 @@ function setupModals() {
     modals.forEach(modal => {
       if (event.target === modal) {
         modal.style.display = 'none';
-       }
+      }
     });
   });
-}
-
-
-// 位置表单提交
-document.getElementById('locationForm').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  const date = document.getElementById('modalLocationDate').value;
-  const location = document.getElementById('modalLocation').value;
   
-  const success = await saveLocation(date, location);
-  if (success) {
-    updateLocationUI();
-    updateLocationStatsUI();
-    document.getElementById('locationModal').style.display = 'none';
-    this.reset();
-  }
-});
-
-// 血糖表单提交
-document.getElementById('glucoseForm').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  const date = document.getElementById('modalGlucoseDate').value;
-  const glucoseData = {
-    fasting: document.getElementById('fastingGlucose').value ? parseFloat(document.getElementById('fastingGlucose').value) : null,
-    beforeBreakfast: document.getElementById('beforeBreakfast').value ? parseFloat(document.getElementById('beforeBreakfast').value) : null,
-    afterBreakfast: document.getElementById('afterBreakfast').value ? parseFloat(document.getElementById('afterBreakfast').value) : null,
-    beforeLunch: document.getElementById('beforeLunch').value ? parseFloat(document.getElementById('beforeLunch').value) : null,
-    afterLunch: document.getElementById('afterLunch').value ? parseFloat(document.getElementById('afterLunch').value) : null,
-    beforeDinner: document.getElementById('beforeDinner').value ? parseFloat(document.getElementById('beforeDinner').value) : null,
-    afterDinner: document.getElementById('afterDinner').value ? parseFloat(document.getElementById('afterDinner').value) : null
-  };
-  
-  const success = await saveGlucose(date, glucoseData);
-  if (success) {
-    updateGlucoseUI();
-    document.getElementById('glucoseModal').style.display = 'none';
-    this.reset();
-  }
-});
-
-// 体重表单提交
-document.getElementById('weightForm').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  const member = document.getElementById('modalWeightMember').value;
-  const date = document.getElementById('modalWeightDate').value;
-  const weight = parseFloat(document.getElementById('modalWeight').value);
-  
-  const success = await saveWeight(member, date, weight);
-  if (success) {
-    updateWeightUI();
-    document.getElementById('weightModal').style.display = 'none';
-    this.reset();
-  }
-});
-
-  // 初始化
-document.addEventListener('DOMContentLoaded', async function() {
-  // 设置日期输入框默认值为今天
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('locationDate').value = today;
-  document.getElementById('glucoseDate').value = today;
-  
-  // 加载数据
-  await loadData();
-  setupModals();
-  
-  // 添加窗口调整大小时重绘图表
-  window.addEventListener('resize', function() {
-    glucoseChart.resize();
-    weightChart.resize();
-    locationStatsChart.resize();
-  });
-});
-  
-/*  
-  // 表单提交处理
-  document.getElementById('locationForm').addEventListener('submit', function(e) {
+  // 位置表单提交
+  document.getElementById('locationForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const date = document.getElementById('modalLocationDate').value;
     const location = document.getElementById('modalLocation').value;
     
-    if (!healthData.location) healthData.location = {};
-    healthData.location[date] = location;
-    
-    saveData();
-    updateLocationUI();
-    updateLocationStatsUI(); // 更新统计
-    document.getElementById('locationModal').style.display = 'none';
-    this.reset();
+    if (await saveLocation(date, location)) {
+      document.getElementById('locationModal').style.display = 'none';
+      updateLocationUI();
+      updateLocationStatsUI();
+      this.reset();
+    }
   });
   
-  document.getElementById('glucoseForm').addEventListener('submit', function(e) {
+  // 血糖表单提交
+  document.getElementById('glucoseForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const date = document.getElementById('modalGlucoseDate').value;
     const glucoseData = {
@@ -1109,64 +1034,30 @@ document.addEventListener('DOMContentLoaded', async function() {
       afterDinner: document.getElementById('afterDinner').value ? parseFloat(document.getElementById('afterDinner').value) : null
     };
     
-    if (!healthData.glucose) healthData.glucose = {};
-    healthData.glucose[date] = glucoseData;
-    
-    saveData();
-    updateGlucoseUI();
-    document.getElementById('glucoseModal').style.display = 'none';
-    this.reset();
+    if (await saveGlucose(date, glucoseData)) {
+      document.getElementById('glucoseModal').style.display = 'none';
+      updateGlucoseUI();
+      this.reset();
+    }
   });
   
-  document.getElementById('weightForm').addEventListener('submit', function(e) {
+  // 体重表单提交
+  document.getElementById('weightForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const member = document.getElementById('modalWeightMember').value;
     const date = document.getElementById('modalWeightDate').value;
     const weight = parseFloat(document.getElementById('modalWeight').value);
     
-    if (!healthData.weight) healthData.weight = {};
-    if (!healthData.weight[member]) healthData.weight[member] = {};
-    healthData.weight[member][date] = weight;
-    
-    saveData();
-    updateWeightUI();
-    document.getElementById('weightModal').style.display = 'none';
-    this.reset();
+    if (await saveWeight(member, date, weight)) {
+      document.getElementById('weightModal').style.display = 'none';
+      updateWeightUI();
+      this.reset();
+    }
   });
 }
 
-// 初始化
-document.addEventListener('DOMContentLoaded', function() {
-  // 设置日期输入框默认值为今天
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('locationDate').value = today;
-  document.getElementById('glucoseDate').value = today;
-  
-  loadData();
-  setupModals();
-  
-  // 添加窗口调整大小时重绘图表
-  window.addEventListener('resize', function() {
-    glucoseChart.resize();
-    weightChart.resize();
-    locationStatsChart.resize();
-  });
-});
-*/
-  
+// 页面加载完成后初始化应用
+document.addEventListener('DOMContentLoaded', initApp);
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
